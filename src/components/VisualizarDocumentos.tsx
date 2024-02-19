@@ -1,15 +1,29 @@
 import { hostApi } from '@/environments/host'
-import React, { use, useEffect } from 'react'
+import React, { use, useEffect, useState } from 'react'
 import { set } from 'react-hook-form'
+
+import { pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.js',
+    import.meta.url,
+).toString();
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+
+
 
 export default function VisualizarDocumentos({ matricula, dadosColeta }: { matricula: string, dadosColeta: any }) {
 
     if (!dadosColeta.imagens) return
     if (dadosColeta.imagens.length === 0) return
 
+    const [numPages, setNumPages] = useState<number>();
+    const [pageNumber, setPageNumber] = useState<number>(1);
+
     const [open, setOpen] = React.useState(false)
-    const [src64, setSrc64] = React.useState('')
-    const [mimetype, setMimetype] = React.useState('')
+    const [url, setUrl] = React.useState('')
 
     const handleOpen = () => {
         setOpen(true)
@@ -19,9 +33,15 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
         setOpen(false)
     }
 
+    function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
+        setNumPages(numPages);
+    }
+
     const carregarDocumento = async (id: string) => {
         // 192.168.1.10:4000/arquivo/:matricula/:id
-        setSrc64('')
+        setUrl('')
+        setNumPages(0)
+        setPageNumber(1)
         const response = await fetch(`${hostApi}arquivo/${matricula}/${id}`)
         const data = await response.json()
 
@@ -31,10 +51,9 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
         }
 
         const dataArquivo = data.message.imagens[0]
+        console.log(dataArquivo)
+        setUrl(dataArquivo.url)
 
-        const url64 = `data:${dataArquivo.mimetype};base64,${dataArquivo.base64}`
-        setMimetype(dataArquivo.mimetype)
-        setSrc64(url64)
 
     }
 
@@ -59,7 +78,7 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
                         <div className='bg-white p-4 rounded-md w-full max-w-md'>
 
                             {
-                                src64 && (
+                                url && (
 
                                     <div
                                         className='fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50'
@@ -69,31 +88,31 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
                                         <div className='bg-white p-4 rounded-md w-11/12 h-5/6'>
 
                                             {
-                                                mimetype === 'application/pdf' && (
-                                                    <iframe
-                                                        src={src64}
-                                                        width="100%"
-                                                        height="94%"
-                                                        allow="autoplay"
-                                                        allowFullScreen
-                                                        title="pdf"
+                                                url.split('.').pop() === 'pdf' ? (
 
-                                                    />
+                                                    <div
+                                                        className='w-full h-full overflow-auto'
+                                                    >
+
+                                                        <Document file={url} onLoadSuccess={onDocumentLoadSuccess}
+
+                                                        >
+                                                            <Page pageNumber={pageNumber} />
+                                                        </Document>
+                                                    </div>
                                                 )
-                                            }
 
-                                            {
-                                                mimetype !== 'application/pdf' && (
+                                                    :
                                                     <img
-                                                        src={src64}
+                                                        src={url}
                                                         alt="Imagem do Documento"
                                                         className='w-full h-full object-contain'
                                                     />
-                                                )
                                             }
+
                                             <button
                                                 className='border border-gray-300 bg-red-500 text-white rounded-md p-2 w-full hover:bg-red-600 transition duration-300 ease-in-out'
-                                                onClick={() => setSrc64('')}
+                                                onClick={() => setUrl('')}
                                             >Fechar</button>
                                         </div>
 

@@ -103,28 +103,6 @@ export default function page() {
         setLabels(labels)
     }
 
-    const converterDocumento = async (event: any) => {
-        const arquivo = event[0];
-        const reader = new FileReader();
-
-        const promise = new Promise((resolve, reject) => {
-            reader.onload = (e: any) => {
-                const base64Data = e.target.result.split(',')[1];
-                const objetoArquivo = {
-                    mimetype: arquivo.type,
-                    base64: base64Data,
-                    nome: arquivo.name,
-                    filesize: arquivo.size,
-                };
-                resolve(objetoArquivo);
-            };
-        });
-        // Adicione a seguinte linha para iniciar a leitura do conteúdo do arquivo
-        reader.readAsDataURL(arquivo);
-
-        return promise;
-    };
-
     const listarDadosDaMatricula = async (matricula: string) => {
 
         setDadosColeta({})
@@ -173,44 +151,36 @@ export default function page() {
     const onSubmit = async (data: any) => {
 
         const toastId = toast.loading('Enviando arquivo...');
-        const arquivoBase64 = await converterDocumento(data.arquivo) as any;
 
-        if (arquivoBase64.mimetype !== "application/pdf" && arquivoBase64.mimetype !== "image/jpeg" && arquivoBase64.mimetype !== "image/png") {
+        const formData = new FormData();
+        formData.append('arquivo', data.arquivo[0]);
+
+        //verifica se o arquivo é um pdf ou imagem
+        if (!data.arquivo[0].type.includes("pdf") && !data.arquivo[0].type.includes("image")) {
             toast.error('Formato de arquivo inválido (Formatos aceitos são apenas pdf e imagens)!', { id: toastId });
             return
         }
 
-        //se o arquivo for maior que 50mb
-        if (arquivoBase64.filesize > 50000000) {
+        //verificar se o arquivo é maior que 50mb
+        if (data.arquivo[0].size > 50000000) {
             toast.error('Tamanho do arquivo excede o limite de 50mb!', { id: toastId });
             return
         }
 
-        const dataInsert = {
-            ...lote,
-            responsavel: userData.nome,
-            status: "ATIVO",
-            imagens:
-            {
-                categoria: categoria,
-                ...arquivoBase64,
-                responsavel: userData.nome,
-                observacao: data.observacao
-            },
-            logs: {
-                data: new Date(),
-                responsavel: userData.nome,
-                acao: `Enviou o documento ${categoria}`,
-            }
-
-        }
+        //enviar os dados do arquivo junto ao formdata
 
         const response = await fetch(hostApi + 'arquivo', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'status': 'ATIVO',
+                'categoria': categoria,
+                'responsavel': userData.nome,
+                'observacao': data.observacao,
+                'acao': `Enviou o documento ${categoria}`,
+                'matricula': lote.matricula,
+                'dataAction': String(new Date()),
             },
-            body: JSON.stringify(dataInsert)
+            body: formData
         })
 
         const dataJson = await response.json()
