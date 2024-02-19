@@ -1,7 +1,8 @@
 "use client";
 
 
-import React, { useRef } from 'react';
+import { hostApi } from '@/environments/host';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Toaster, toast } from 'react-hot-toast';
 
@@ -9,7 +10,7 @@ import { Toaster, toast } from 'react-hot-toast';
 
 export default function Arquivos() {
 
-    const { register, handleSubmit, formState: { errors }, } = useForm()
+    const { register, handleSubmit, formState: { errors } } = useForm()
 
     const [src64, setSrc64] = React.useState('')
 
@@ -51,7 +52,7 @@ export default function Arquivos() {
             ...arquivoBase64
         }
 
-        const response = await fetch('http://localhost:4000/arquivo', {
+        const response = await fetch(hostApi + 'arquivo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -61,8 +62,6 @@ export default function Arquivos() {
 
         const dataJson = await response.json()
 
-        console.log("response", response)
-        console.log("data", dataJson)
     };
 
     return (
@@ -88,6 +87,8 @@ export default function Arquivos() {
                 >Enviar</button>
 
             </form>
+
+
 
             <a href="/documents/list"
                 className='w-full max-w-md p-4 bg-white shadow-md rounded-md mt-4'
