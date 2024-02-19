@@ -13,4 +13,14 @@ Sentry.init({
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
+  integrations: [
+    Sentry.replayIntegration({
+      // Additional Replay configuration goes in here, for example:
+      networkDetailAllowUrls: ['https://backarquivos.devlucas.online/arquivo'],
+      networkRequestHeaders: ['X-Custom-Header'],
+      networkResponseHeaders: ['X-Custom-Header'],
+      maskAllText: false,
+      blockAllMedia: false,
+    }),
+  ]
 });
