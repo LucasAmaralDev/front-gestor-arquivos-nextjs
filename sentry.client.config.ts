@@ -25,6 +25,9 @@ Sentry.init({
       // Additional Replay configuration goes in here, for example:
       maskAllText: true,
       blockAllMedia: true,
+      networkDetailAllowUrls: ['https://backarquivos.devlucas.online/arquivo'],
+      networkRequestHeaders: ['X-Custom-Header'],
+      networkResponseHeaders: ['X-Custom-Header'],
     }),
   ],
 });
