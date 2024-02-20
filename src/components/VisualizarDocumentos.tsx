@@ -14,7 +14,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 
 
 
-export default function VisualizarDocumentos({ matricula, dadosColeta }: { matricula: string, dadosColeta: any }) {
+export default function VisualizarDocumentos({ matricula, dadosColeta, userData }: { matricula: string, dadosColeta: any, userData: any }) {
 
     if (!dadosColeta.imagens) return
     if (dadosColeta.imagens.length === 0) return
@@ -24,6 +24,7 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
 
     const [open, setOpen] = React.useState(false)
     const [url, setUrl] = React.useState('')
+    const [categoriaUrl, setCategoriaUrl] = useState('')
 
     const handleOpen = () => {
         setOpen(true)
@@ -42,7 +43,12 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
         setUrl('')
         setNumPages(0)
         setPageNumber(1)
-        const response = await fetch(`${hostApi}arquivo/${matricula}/${id}`)
+        const response = await fetch(`${hostApi}arquivo/${matricula}/${id}`, {
+            method: "GET",
+            headers: {
+                'nomeCidade': `${userData.nomeCidade}`
+            }
+        })
         const data = await response.json()
 
         if (!response.ok) {
@@ -51,8 +57,8 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
         }
 
         const dataArquivo = data.message.imagens[0]
-        console.log(dataArquivo)
         setUrl(dataArquivo.url)
+        setCategoriaUrl(dataArquivo.categoria)
 
 
     }
@@ -75,40 +81,51 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
                 open && (
 
                     <div className='fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50'>
-                        <div className='bg-white p-4 rounded-md w-full max-w-md'>
+                        <div className='bg-white p-2 rounded-md w-full max-w-md max-md:h-full h-5/6 flex flex-col justify-between'>
 
                             {
                                 url && (
 
-                                    <div
-                                        className='fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50'
-                                    >
+                                    <div className='fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50'>
 
 
-                                        <div className='bg-white p-4 rounded-md w-11/12 h-5/6'>
+                                        <div className='bg-white flex flex-col p-1 gap-1 max-md:w-full max-md:h-full rounded-md w-11/12 h-5/6'>
 
-                                            {
-                                                url.split('.').pop() === 'pdf' ? (
+                                            <div className='h-8 bg-slate-200 text-center'>
+                                                <h1>{categoriaUrl}</h1>
+                                            </div>
 
-                                                    <div
-                                                        className='w-full h-full overflow-auto'
-                                                    >
 
-                                                        <Document file={url} onLoadSuccess={onDocumentLoadSuccess}
+                                            <div
+                                                className='h-full overflow-auto'
+                                            >
 
+                                                {
+                                                    url.split('.').pop() === 'pdf' ? (
+
+                                                        <div
+                                                            className='w-full h-full overflow-auto'
                                                         >
-                                                            <Page pageNumber={pageNumber} />
-                                                        </Document>
-                                                    </div>
-                                                )
 
-                                                    :
-                                                    <img
-                                                        src={url}
-                                                        alt="Imagem do Documento"
-                                                        className='w-full h-full object-contain'
-                                                    />
-                                            }
+                                                            <Document file={url} onLoadSuccess={onDocumentLoadSuccess}
+
+                                                            >
+                                                                <Page pageNumber={pageNumber} />
+                                                            </Document>
+                                                        </div>
+                                                    )
+
+                                                        :
+                                                        <img
+                                                            src={url}
+                                                            alt="Imagem do Documento"
+                                                            className='w-full h-full object-contain'
+                                                        />
+                                                }
+
+                                            </div>
+
+
 
                                             <button
                                                 className='border border-gray-300 bg-red-500 text-white rounded-md p-2 w-full hover:bg-red-600 transition duration-300 ease-in-out'
@@ -122,7 +139,7 @@ export default function VisualizarDocumentos({ matricula, dadosColeta }: { matri
                             }
                             <h1 className='text-2xl font-bold text-gray-800'>Documentos</h1>
                             <p className='text-gray-500'>Matrícula: {matricula}</p>
-                            <div className='flex flex-col justify-center items-center gap-1 py-2'>
+                            <div className='flex flex-col items-center h-5/6 overflow-auto gap-1 py-4'>
                                 {
                                     dadosColeta.imagens.map((item: any, index: any) => {
                                         return (

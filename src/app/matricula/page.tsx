@@ -70,7 +70,7 @@ export default function page() {
             return
         }
 
-        console.log("data", data)
+
         setUserData(data)
     }
 
@@ -111,11 +111,15 @@ export default function page() {
         reset()
 
 
-        const response = await fetch(hostApi + "arquivo/info/" + matricula)
+        const response = await fetch(hostApi + "arquivo/info/" + matricula, {
+            method: "GET",
+            headers: {
+                'nomeCidade': `${userData.nomeCidade}`,
+            }
+        })
         const data = await response.json()
 
         if (data.message) {
-            console.log("data.message", data.message)
             setDadosColeta(data.message)
         }
 
@@ -129,7 +133,6 @@ export default function page() {
 
 
         if (!data.message.matricula) {
-            console.log("nenhum documento encontrado")
             setStatusDocumento(documentos)
             return
         }
@@ -152,6 +155,8 @@ export default function page() {
 
         const toastId = toast.loading('Enviando arquivo...');
 
+
+
         const formData = new FormData();
         formData.append('arquivo', data.arquivo[0]);
 
@@ -173,12 +178,13 @@ export default function page() {
             method: 'POST',
             headers: {
                 'status': 'ATIVO',
+                'nomeCidade': `${userData.nomeCidade}`,
                 'categoria': categoria,
                 'responsavel': userData.nome,
                 'observacao': data.observacao,
                 'acao': `Enviou o documento ${categoria}`,
                 'matricula': lote.matricula,
-                'dataAction': String(new Date()),
+                'dataAction': String(new Date().getTime()),
             },
             body: formData
         })
@@ -194,8 +200,6 @@ export default function page() {
             toast.error('Erro ao enviar arquivo!', { id: toastId });
         }
 
-        console.log("response", response)
-        console.log("data", dataJson)
     };
 
     const iniciarColeta = async () => {
@@ -214,7 +218,8 @@ export default function page() {
         const response = await fetch(hostApi + 'arquivo/alterarStatus', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'nomeCidade': `${userData.nomeCidade}`,
             },
             body: JSON.stringify(dataInsert)
         })
@@ -248,7 +253,8 @@ export default function page() {
         const response = await fetch(hostApi + 'arquivo/alterarStatus', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'nomeCidade': `${userData.nomeCidade}`,
             },
             body: JSON.stringify(dataInsert)
         })
@@ -330,7 +336,6 @@ export default function page() {
                                     setLote({})
                                     return
                                 }
-                                console.log(value)
                                 setLote(value)
                             }}
                             filterOptions={(options, params) => {
@@ -401,7 +406,7 @@ export default function page() {
                             <p className='font-bold'>Data: {new Date().toLocaleDateString()}</p>
                             {/* LOGS  */}
                             <VisualizarLogs logs={dadosColeta.logs} />
-                            <VisualizarDocumentos matricula={lote.matricula} dadosColeta={dadosColeta} />
+                            <VisualizarDocumentos matricula={lote.matricula} dadosColeta={dadosColeta} userData={userData} />
                         </div>
 
                         {
